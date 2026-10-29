@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Application History — SmartApply{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Application Outreach History</h1>
+        <p>Audit trail of all email dispatches submitted to your SMTP mail server.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('api_export_history') }}" class="btn btn-sa-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export to CSV
+        </a>
+        <button type="button" id="btnClearHistory" class="btn btn-outline-danger btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            Clear History
+        </button>
+    </div>
+</div>
+
+<!-- Clear SMTP Acceptance Disclaimer Alert -->
+<div class="alert alert-light border shadow-sm d-flex align-items-center gap-2 py-2 px-3 mb-4" role="alert">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+    <span class="small text-muted">
+        <strong>SMTP Status Notice:</strong> Successful dispatches are labeled <em>"Sent to SMTP server"</em> because SMTP acceptance confirms handoff to your outgoing mail provider; final delivery depends on the recipient's mail exchanger and spam filters.
+    </span>
+</div>
+
+<!-- History Card -->
+<div class="sa-card">
+    <div class="sa-card-header flex-wrap gap-3">
+        <!-- Search and Filters -->
+        <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 500px;">
+            <input type="text" id="historySearch" class="form-control form-control-sm" placeholder="Search by recipient, company, or job title...">
+            <select id="historyStatusFilter" class="form-select form-select-sm" style="width: 180px;">
+                <option value="">All Statuses</option>
+                <option value="Sent to SMTP server">Sent to SMTP</option>
+                <option value="Failed">Failed</option>
+                <option value="Skipped">Skipped</option>
+            </select>
+        </div>
+
+        <div class="small text-muted">
+            Total records: <span class="fw-bold text-dark">{{ stats.total }}</span> &bull; 
+            Sent: <span class="fw-bold text-success">{{ stats.sent }}</span> &bull; 
+            Failed: <span class="fw-bold text-danger">{{ stats.failed }}</span>
+        </div>
+    </div>
+
+    <!-- History Table -->
+    <div class="table-responsive">
+        <table class="table-sa align-middle">
+            <thead>
+                <tr>
+                    <th>Recipient</th>
+                    <th>Company</th>
+                    <th>Job Title</th>
+                    <th>Submission Status</th>
+                    <th>Timestamp</th>
+                    <th class="text-end" style="width: 90px;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="historyTableBody">
+                {% if history_records and history_records|length > 0 %}
+                    {% for r in history_records %}
+                    <tr>
+                        <td class="fw-semibold text-dark">{{ r.recipient_email }}</td>
+                        <td>{{ r.company_name or '—' }}</td>
+                        <td>{{ r.job_title or '—' }}</td>
+                        <td>
+                            {% if r.status == 'Sent to SMTP server' %}
+                                <span class="badge badge-sa-success">✓ Sent to SMTP server</span>
+                            {% elif r.status == 'Failed' %}
+                                <span class="badge badge-sa-danger">✗ Failed</span>
+                            {% elif r.status.startswith('Skipped') %}
+                                <span class="badge badge-sa-warning">⊘ {{ r.status }}</span>
+                            {% else %}
+                                <span class="badge badge-sa-neutral">{{ r.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ r.created_at }}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-history-details"
+                                data-subject="{{ r.subject }}"
+                                data-snippet="{{ r.body_snippet }}"
+                                data-error="{{ r.error_message or '' }}"
+                                data-resume="{{ r.resume_name or '' }}">
+                                Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No application dispatches logged yet.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Record Details -->
+<div class="modal fade" id="historyDetailsModal" tabindex="-1" aria-labelledby="historyDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="historyDetailsModalLabel">Dispatch Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Subject</label>
+                    <div id="modalDetailSubject" class="fw-semibold text-dark"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Resume Attached</label>
+                    <div id="modalDetailResume" class="text-dark small"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Body Snippet</label>
+                    <div id="modalDetailSnippet" class="p-3 bg-light rounded small border" style="white-space: pre-wrap; font-family: monospace;"></div>
+                </div>
+                <div class="mb-0 d-none">
+                    <label class="form-label small text-danger fw-bold">Error Diagnostic</label>
+                    <div id="modalDetailError" class="p-2 bg-danger-subtle text-danger rounded small border border-danger-subtle"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-sm btn-sa-outline" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

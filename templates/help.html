@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Setup Guide — SmartApply{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Help & Setup Guide</h1>
+        <p>Instructions for configuring Gmail App Passwords, troubleshooting SMTP connections, and safe outreach practices.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Guide -->
+    <div class="col-12 col-xl-8">
+        
+        <!-- Gmail App Password Guide Card -->
+        <div class="sa-card mb-4">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    How to Generate a Gmail App Password
+                </h2>
+                <span class="badge badge-sa-neutral">Google Security Requirement</span>
+            </div>
+
+            <div class="alert alert-info py-2 px-3 small mb-4">
+                <strong>Important:</strong> Google disables direct login with your personal Gmail password for external SMTP clients. You must generate a dedicated 16-character <em>App Password</em>. This requires 2-Step Verification to be enabled on your account.
+            </div>
+
+            <div class="d-flex flex-column gap-4">
+                <div class="d-flex gap-3">
+                    <div class="badge bg-primary rounded-circle flex-shrink-0" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">1</div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Enable 2-Step Verification</h5>
+                        <p class="text-muted small mb-0">
+                            Visit your <a href="https://myaccount.google.com/security" target="_blank" class="fw-semibold">Google Account Security page</a>. Under the <em>"How you sign in to Google"</em> section, ensure <strong>2-Step Verification</strong> is turned <strong>ON</strong>.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <div class="badge bg-primary rounded-circle flex-shrink-0" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">2</div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Open Google App Passwords</h5>
+                        <p class="text-muted small mb-0">
+                            Navigate directly to <a href="https://myaccount.google.com/apppasswords" target="_blank" class="fw-semibold">myaccount.google.com/apppasswords</a>. If prompted, verify your password.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <div class="badge bg-primary rounded-circle flex-shrink-0" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">3</div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Generate App Password</h5>
+                        <p class="text-muted small mb-0">
+                            Enter an app name such as <code>SmartApply</code> in the <em>App name</em> field and click <strong>Create</strong>. Google will display a 16-character code (e.g. <code>abcd efgh ijkl mnop</code>).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3">
+                    <div class="badge bg-primary rounded-circle flex-shrink-0" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">4</div>
+                    <div>
+                        <h5 class="fw-bold mb-1">Paste into SmartApply</h5>
+                        <p class="text-muted small mb-0">
+                            Copy the 16 characters (spaces are optional) and paste them into the <strong>App Password</strong> field in <a href="{{ url_for('smtp_page') }}" class="fw-semibold">SMTP Settings</a>. Click <em>Test Connection</em> to confirm verification.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Troubleshooting Common Errors -->
+        <div class="sa-card">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    Troubleshooting Common SMTP Errors
+                </h2>
+            </div>
+
+            <div class="accordion accordion-flush" id="faqAccordion">
+                <div class="accordion-item border-bottom">
+                    <h2 class="accordion-header" id="faqOneHeader">
+                        <button class="accordion-button collapsed fw-semibold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqOne" aria-expanded="false" aria-controls="faqOne">
+                            Error: Authentication Failed (Code 535 / 534)
+                        </button>
+                    </h2>
+                    <div id="faqOne" class="accordion-collapse collapse" aria-labelledby="faqOneHeader" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body small text-muted">
+                            This almost always indicates that your standard Google account password was entered rather than a 16-character App Password. Verify that 2-Step Verification is active and generate an App Password at <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a>.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item border-bottom">
+                    <h2 class="accordion-header" id="faqTwoHeader">
+                        <button class="accordion-button collapsed fw-semibold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqTwo" aria-expanded="false" aria-controls="faqTwo">
+                            Error: Connection Timed Out (Port 587 or 465)
+                        </button>
+                    </h2>
+                    <div id="faqTwo" class="accordion-collapse collapse" aria-labelledby="faqTwoHeader" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body small text-muted">
+                            Some public Wi-Fi networks (coffee shops, hotels, libraries) or corporate firewalls block outbound connections on SMTP port 587 or 465. Try switching networks, or switch the security setting between STARTTLS (port 587) and SSL/TLS (port 465).
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item border-bottom">
+                    <h2 class="accordion-header" id="faqThreeHeader">
+                        <button class="accordion-button collapsed fw-semibold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#faqThree" aria-expanded="false" aria-controls="faqThree">
+                            What if my PDF is a scanned image?
+                        </button>
+                    </h2>
+                    <div id="faqThree" class="accordion-collapse collapse" aria-labelledby="faqThreeHeader" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body small text-muted">
+                            SmartApply uses PyMuPDF to extract selectable digital text from PDF files. If a document is a pure scanned photograph or raster image with no text layer, SmartApply detects this and will alert you that an OCR tool is needed. You can also add recipients manually at any time.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Best Practices -->
+    <div class="col-12 col-xl-4">
+        <div class="sa-card">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Responsible Outreach
+                </h2>
+            </div>
+
+            <div class="small text-muted d-flex flex-column gap-3">
+                <div class="p-3 bg-light rounded border">
+                    <h6 class="fw-bold text-dark mb-1">Individual Messaging</h6>
+                    <p class="mb-0">SmartApply never puts recipients in CC or BCC fields. Every recruiter receives an isolated, individual email with their customized details.</p>
+                </div>
+
+                <div class="p-3 bg-light rounded border">
+                    <h6 class="fw-bold text-dark mb-1">Configured Delays</h6>
+                    <p class="mb-0">Keep a delay of at least 2.0 to 5.0 seconds between emails. Email providers (like Gmail) will throttle or flag accounts that blast dozens of emails per second.</p>
+                </div>
+
+                <div class="p-3 bg-light rounded border">
+                    <h6 class="fw-bold text-dark mb-1">Small Batch Limits</h6>
+                    <p class="mb-0">We recommend sending in small batches of 5 to 10 applications per session. This ensures high deliverability, allows you to review responses, and protects your sender reputation.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Email Composer — SmartApply{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Email Composer & Template</h1>
+        <p>Personalize your application email, manage your resume attachment, and preview live before sending.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" id="btnOpenTestEmailModal" class="btn btn-sa-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+            Send Test Email
+        </button>
+        <button type="button" id="btnReviewCampaign" class="btn btn-sa-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+            Review & Send (<span class="recipient-selected-count">0</span>)
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Settings, Resume, & Template Editor -->
+    <div class="col-12 col-xl-7">
+        
+        <!-- Resume Upload Card -->
+        <div class="sa-card mb-3">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Resume Attachment (PDF)
+                </h2>
+                <span class="badge badge-sa-neutral">Attached to Outgoing Emails</span>
+            </div>
+
+            <!-- Drag & Drop Zone (Visible when no resume uploaded) -->
+            <div id="resumeDropzone" class="upload-dropzone p-3 {% if resume_info %}d-none{% endif %}">
+                <input type="file" id="resumeFileInput" accept=".pdf,application/pdf" class="d-none">
+                <div class="dropzone-icon" style="width: 44px; height: 44px; margin-bottom: 0.75rem;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <div class="dropzone-title" style="font-size: 0.95rem;">Upload Your Resume (PDF)</div>
+                <p class="dropzone-hint">Click or drop your resume here (Max 10MB). Original file will not be altered.</p>
+            </div>
+
+            <!-- Resume Active Card (Visible when resume exists) -->
+            <div id="resumeInfoCard" class="p-3 border rounded-3 bg-light {% if not resume_info %}d-none{% endif %} d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="p-2 bg-white rounded border text-danger">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark">
+                            <span id="resumeFilenameDisplay">{% if resume_info %}{{ resume_info.filename }}{% endif %}</span>
+                            <span id="resumeFilesizeDisplay" class="text-muted small fw-normal ms-1">{% if resume_info %}({{ resume_info.size_kb }} KB){% endif %}</span>
+                        </div>
+                        <span class="badge badge-sa-success mt-1">Ready to attach</span>
+                    </div>
+                </div>
+                <button type="button" id="btnRemoveResume" class="btn btn-sm btn-outline-danger">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    Remove
+                </button>
+            </div>
+        </div>
+
+        <!-- Candidate Profile & Sender Details -->
+        <div class="sa-card mb-3">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"></circle><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path></svg>
+                    Sender Profile & Placeholders
+                </h2>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="small text-muted">SMTP:</span>
+                    {% if smtp_cfg and smtp_cfg.has_password and smtp_cfg.username %}
+                        <span class="badge badge-sa-success">{{ smtp_cfg.username }}</span>
+                    {% else %}
+                        <a href="{{ url_for('smtp_page') }}" class="badge badge-sa-warning text-decoration-none">Configure SMTP</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="candidateName">Your Full Name <code>{your_name}</code></label>
+                    <input type="text" id="candidateName" class="form-control" value="{{ template_cfg.candidate_name }}" placeholder="Alex Morgan">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label" for="candidateContact">Your Contact Information <code>{your_contact}</code></label>
+                    <input type="text" id="candidateContact" class="form-control" value="{{ template_cfg.candidate_contact }}" placeholder="alex@email.com | +1 (555) 019-2834 | linkedin.com/in/alex">
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Template Editor -->
+        <div class="sa-card">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    Email Template Content
+                </h2>
+                <div class="d-flex gap-2">
+                    <button type="button" id="btnResetTemplate" class="btn btn-sm btn-sa-outline">Reset to Template</button>
+                    <button type="button" id="btnSaveTemplate" class="btn btn-sm btn-sa-outline">Save Template</button>
+                </div>
+            </div>
+
+            <!-- Subject Input -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label m-0" for="emailSubject">Subject Line</label>
+                    <div class="d-flex gap-1">
+                        <span class="tag-pill" data-tag="{job_title}" data-target="emailSubject">+ {job_title}</span>
+                        <span class="tag-pill" data-tag="{company}" data-target="emailSubject">+ {company}</span>
+                        <span class="tag-pill" data-tag="{your_name}" data-target="emailSubject">+ {your_name}</span>
+                    </div>
+                </div>
+                <input type="text" id="emailSubject" class="form-control" value="{{ template_cfg.subject }}" placeholder="Application for {job_title} — {your_name}">
+            </div>
+
+            <!-- Body Input -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label m-0" for="emailBody">Email Body</label>
+                    <div class="d-flex gap-1">
+                        <span class="tag-pill" data-tag="{company}" data-target="emailBody">+ {company}</span>
+                        <span class="tag-pill" data-tag="{job_title}" data-target="emailBody">+ {job_title}</span>
+                        <span class="tag-pill" data-tag="{your_name}" data-target="emailBody">+ {your_name}</span>
+                        <span class="tag-pill" data-tag="{your_contact}" data-target="emailBody">+ {your_contact}</span>
+                    </div>
+                </div>
+                <textarea id="emailBody" class="form-control" rows="12" style="font-family: inherit; font-size: 0.92rem; line-height: 1.6;">{{ template_cfg.body }}</textarea>
+            </div>
+
+            <!-- Sending Batch Controls -->
+            <div class="p-3 bg-light rounded border">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="delaySeconds">Delay Between Emails (seconds)</label>
+                        <input type="number" id="delaySeconds" class="form-control" step="0.5" min="1.0" max="30.0" value="{{ template_cfg.delay_seconds }}">
+                        <span class="form-text small">Recommended: 2.0s to 5.0s to respect SMTP rate limits.</span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="batchLimit">Session Batch Sending Limit</label>
+                        <input type="number" id="batchLimit" class="form-control" min="1" max="50" value="{{ template_cfg.batch_limit }}">
+                        <span class="form-text small">Default safe batch size is small (5) to prevent accidental bulk dispatches.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Column: Live Email Preview -->
+    <div class="col-12 col-xl-5">
+        <div class="sa-card sticky-top" style="top: 80px;">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Live Personalized Preview
+                </h2>
+                <span class="badge badge-sa-neutral">Interpolated</span>
+            </div>
+
+            <!-- Recipient Switcher for Preview -->
+            <div class="mb-3">
+                <label class="form-label small text-muted" for="previewRecipientSelect">Preview as received by:</label>
+                <select id="previewRecipientSelect" class="form-select form-select-sm">
+                    <option value="">Sample Recipient</option>
+                </select>
+            </div>
+
+            <!-- Simulated Email Container -->
+            <div class="email-preview-card mb-3">
+                <div class="preview-header">
+                    <div class="mb-1"><strong class="text-muted">From:</strong> <span class="text-dark">{{ smtp_cfg.username or 'your.email@gmail.com' }}</span></div>
+                    <div class="mb-1"><strong class="text-muted">To:</strong> <span id="previewToText" class="text-dark">recruiter@company.com</span></div>
+                    <div><strong class="text-muted">Subject:</strong> <span id="previewSubjectText" class="fw-semibold text-primary">Application for Senior Developer</span></div>
+                    {% if resume_info %}
+                    <div class="mt-2 pt-2 border-top d-flex align-items-center gap-1 small text-muted">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                        <span>Attachment: <strong>{{ resume_info.filename }}</strong></span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div id="previewBodyText" class="preview-body">
+                    Loading preview...
+                </div>
+            </div>
+
+            <!-- Outreach Summary Card -->
+            <div class="p-3 border rounded bg-light mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Selected Recipients:</span>
+                    <span class="fw-bold recipient-selected-count">0</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="small text-muted">Sending Method:</span>
+                    <span class="fw-semibold small">1-to-1 Individual Emails (No CC/BCC)</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="small text-muted">Resume Attached:</span>
+                    <span class="fw-semibold small {% if resume_info %}text-success{% else %}text-danger{% endif %}">
+                        {% if resume_info %}Yes ({{ resume_info.filename }}){% else %}No resume uploaded{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <button type="button" id="btnReviewCampaignSide" class="btn btn-sa-primary w-100 py-2" onclick="document.getElementById('btnReviewCampaign').click()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                Review & Launch Campaign
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Send Single Test Email -->
+<div class="modal fade" id="testEmailModal" tabindex="-1" aria-labelledby="testEmailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" id="testEmailModalLabel">Send Test Email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="sendTestForm">
+                <div class="modal-body p-4">
+                    <p class="small text-muted">
+                        Transmit a real test email with your current subject, template placeholders, and resume attachment to verify presentation in an inbox before initiating your bulk campaign.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label" for="testRecipientEmail">Test Recipient Address <span class="text-danger">*</span></label>
+                        <input type="email" id="testRecipientEmail" class="form-control" value="{{ smtp_cfg.username }}" placeholder="your.personal.email@domain.com" required>
+                        <span class="form-text small">Enter your own personal email address to inspect the test message.</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-sm btn-sa-outline" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" id="btnSendTestSubmit" class="btn btn-sm btn-sa-primary">
+                        <span id="testEmailSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+                        Send Test Now
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Review & Confirmation Checklist Before Sending -->
+<div class="modal fade" id="reviewCampaignModal" tabindex="-1" aria-labelledby="reviewCampaignModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+            <div class="modal-header border-bottom px-4 py-3">
+                <h5 class="modal-title fw-bold m-0" id="reviewCampaignModalLabel">Safety Confirmation: Launch Campaign</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-info py-2 px-3 small mb-3">
+                    <strong>Safe Sending Policy:</strong> Emails will be sent individually with throttling delays. Duplicate addresses within this batch are skipped automatically.
+                </div>
+
+                <div class="list-group list-group-flush border rounded mb-3">
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+                        <span class="small text-muted">Sender Account:</span>
+                        <span class="fw-semibold">{{ smtp_cfg.username or 'Not Configured' }}</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+                        <span class="small text-muted">Total Selected in List:</span>
+                        <span id="reviewSelectedCount" class="fw-bold text-primary">0</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+                        <span class="small text-muted">Batch Session Limit:</span>
+                        <span id="reviewBatchLimit" class="fw-semibold">5</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+                        <span class="small text-muted">Delay Between Emails:</span>
+                        <span id="reviewDelay" class="fw-semibold">2.0s</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-2 bg-light">
+                        <span class="fw-bold">Emails to Send in This Session:</span>
+                        <span id="reviewWillSendCount" class="h5 fw-bold text-success mb-0">0</span>
+                    </div>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmExplicitCheck" required checked>
+                    <label class="form-check-label small" for="confirmExplicitCheck">
+                        I have reviewed the email content and recipient list, and confirm these application emails should be transmitted.
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer border-top px-4 py-3">
+                <button type="button" class="btn btn-sm btn-sa-outline" data-bs-dismiss="modal">Go Back & Edit</button>
+                <button type="button" id="btnConfirmSend" class="btn btn-sm btn-sa-primary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg>
+                    Confirm & Start Sending
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

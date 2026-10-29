@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Overview — SmartApply{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Your Job Applications, Simplified</h1>
+        <p>Private, local email outreach automation without paid APIs or external services.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('import_page') }}" class="btn btn-sa-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            Create Campaign
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap primary">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div>
+                <h3 class="kpi-number recipient-total-count">{{ stats.total }}</h3>
+                <p class="kpi-label">Total Applications Logged</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap warning">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <div>
+                <h3 class="kpi-number recipient-selected-count">0</h3>
+                <p class="kpi-label">Active Staged Recipients</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap success">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div>
+                <h3 class="kpi-number">{{ stats.sent }}</h3>
+                <p class="kpi-label">Sent to SMTP Server</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            </div>
+            <div>
+                <h3 class="kpi-number">{{ stats.failed }}</h3>
+                <p class="kpi-label">Failed Submissions</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Start & System Status Row -->
+<div class="row g-4 mb-4">
+    <!-- Quick-start workflow -->
+    <div class="col-12 col-lg-8">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                    Quick-Start Workflow
+                </h2>
+                <span class="badge badge-sa-neutral">4 Easy Steps</span>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <div class="p-3 border rounded-3 bg-light h-100">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-primary rounded-circle" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">1</span>
+                            <span class="fw-bold">Upload Job Details PDF</span>
+                        </div>
+                        <p class="small text-muted mb-0">Drag and drop your recruiter listings or job document. PyMuPDF scans and extracts all unique email addresses safely.</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="p-3 border rounded-3 bg-light h-100">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-primary rounded-circle" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">2</span>
+                            <span class="fw-bold">Review & Refine Recipients</span>
+                        </div>
+                        <p class="small text-muted mb-0">Select or deselect recipients, inspect auto-detected company names and job titles, or add manual contacts.</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="p-3 border rounded-3 bg-light h-100">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-primary rounded-circle" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">3</span>
+                            <span class="fw-bold">Attach Resume & Customize</span>
+                        </div>
+                        <p class="small text-muted mb-0">Upload your PDF resume and personalize your template with smart dynamic placeholders like <code>{company}</code> and <code>{job_title}</code>.</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="p-3 border rounded-3 bg-light h-100">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge bg-primary rounded-circle" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">4</span>
+                            <span class="fw-bold">Controlled Send & Tracking</span>
+                        </div>
+                        <p class="small text-muted mb-0">Preview before sending. Controlled batch sending with pauses, rate delays, and local SQLite history tracking.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                <span class="small text-muted">Ready to begin your job search outreach?</span>
+                <a href="{{ url_for('import_page') }}" class="btn btn-sm btn-sa-primary">Start Importing PDF &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status Card -->
+    <div class="col-12 col-lg-4">
+        <div class="sa-card h-100">
+            <div class="sa-card-header">
+                <h2 class="sa-card-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    System Status
+                </h2>
+            </div>
+
+            <!-- SMTP Config Status -->
+            <div class="mb-3 p-3 border rounded-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-bold">SMTP Mail Server</span>
+                    {% if smtp_cfg and smtp_cfg.has_password and smtp_cfg.username %}
+                        <span class="badge badge-sa-success">Ready</span>
+                    {% else %}
+                        <span class="badge badge-sa-warning">Not Configured</span>
+                    {% endif %}
+                </div>
+                <p class="small text-muted mb-2">
+                    {% if smtp_cfg and smtp_cfg.has_password and smtp_cfg.username %}
+                        Connected via {{ smtp_cfg.host }} ({{ smtp_cfg.username }})
+                    {% else %}
+                        Please configure your Gmail App Password to enable sending.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('smtp_page') }}" class="btn btn-sm btn-outline-secondary w-100">Configure SMTP</a>
+            </div>
+
+            <!-- Resume Status -->
+            <div class="p-3 border rounded-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small fw-bold">Active Resume</span>
+                    {% if resume_name %}
+                        <span class="badge badge-sa-success">Attached</span>
+                    {% else %}
+                        <span class="badge badge-sa-neutral">No Resume</span>
+                    {% endif %}
+                </div>
+                <p class="small text-muted mb-2">
+                    {% if resume_name %}
+                        {{ resume_name }} (ready to attach)
+                    {% else %}
+                        Upload your PDF resume in the composer to attach it to applications.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('composer_page') }}" class="btn btn-sm btn-outline-secondary w-100">Manage Resume</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Table -->
+<div class="sa-card">
+    <div class="sa-card-header">
+        <h2 class="sa-card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Recent Activity
+        </h2>
+        <a href="{{ url_for('history_page') }}" class="btn btn-sm btn-sa-outline">View Full History &rarr;</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table-sa">
+            <thead>
+                <tr>
+                    <th>Recipient</th>
+                    <th>Company</th>
+                    <th>Job Title</th>
+                    <th>Status</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if recent_history and recent_history|length > 0 %}
+                    {% for item in recent_history %}
+                    <tr>
+                        <td class="fw-semibold text-dark">{{ item.recipient_email }}</td>
+                        <td>{{ item.company_name or '—' }}</td>
+                        <td>{{ item.job_title or '—' }}</td>
+                        <td>
+                            {% if item.status == 'Sent to SMTP server' %}
+                                <span class="badge badge-sa-success">✓ Sent to SMTP server</span>
+                            {% elif item.status == 'Failed' %}
+                                <span class="badge badge-sa-danger">✗ Failed</span>
+                            {% else %}
+                                <span class="badge badge-sa-warning">{{ item.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted small">{{ item.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            No application dispatches logged yet. Create your first campaign above!
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
