@@ -1,0 +1,75 @@
+================================================================================
+                    SMARTAPPLY - TERMINAL RUN COMMANDS
+================================================================================
+
+PROJECT: SmartApply — Job Application Email Automation
+LOCAL URL: http://127.0.0.1:5000
+
+--------------------------------------------------------------------------------
+1. RUN COMMANDS FOR macOS & Linux
+--------------------------------------------------------------------------------
+
+Open Terminal in this project folder (/Users/cms/Automation) and run:
+
+# Step 1: Create virtual environment (one-time setup)
+python3 -m venv .venv
+
+# Step 2: Activate virtual environment
+source .venv/bin/activate
+
+# Step 3: Install all dependencies (one-time setup)
+python3 -m pip install -r requirements.txt
+
+# Step 4: Start the application
+python3 app.py
+
+# Once started, open your browser and go to:
+http://127.0.0.1:5000
+
+
+--------------------------------------------------------------------------------
+2. QUICK ONE-LINE COMMAND FOR macOS & Linux (Subsequent Runs)
+--------------------------------------------------------------------------------
+
+source .venv/bin/activate && python3 app.py
+
+
+--------------------------------------------------------------------------------
+3. RUN COMMANDS FOR Windows (PowerShell)
+--------------------------------------------------------------------------------
+
+Open PowerShell in the project folder and run:
+
+# Step 1: Create virtual environment (one-time setup)
+py -m venv .venv
+
+# Step 2: Activate virtual environment
+.venv\Scripts\Activate.ps1
+
+# Step 3: Install all dependencies (one-time setup)
+python -m pip install -r requirements.txt
+
+# Step 4: Start the application
+python app.py
+
+# Once started, open your browser and go to:
+http://127.0.0.1:5000
+
+
+--------------------------------------------------------------------------------
+4. HOW TO RUN THE TEST SUITE
+--------------------------------------------------------------------------------
+
+With the virtual environment activated, run:
+
+pytest -v
+
+
+--------------------------------------------------------------------------------
+5. STOPPING THE SERVER
+--------------------------------------------------------------------------------
+
+Press Ctrl + C in the terminal window where app.py is running.
+
+
+================================================================================
