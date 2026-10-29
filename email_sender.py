@@ -118,6 +118,15 @@ def test_smtp_connection(
         )
         return False, msg
 
+    except smtplib.SMTPServerDisconnected as disc_err:
+        if "gmail.com" in host.lower():
+            return False, (
+                "Gmail disconnected: Application-specific password required. "
+                "Google does not permit using your standard Gmail password. "
+                "Generate a 16-character App Password at myaccount.google.com/apppasswords."
+            )
+        return False, f"Server disconnected: {str(disc_err)}"
+
     except smtplib.SMTPConnectError:
         return False, f"Could not connect to SMTP server at {host}:{port}. Please check the server address and port."
 
@@ -318,6 +327,18 @@ class CampaignManager:
             server.send_message(msg)
             server.quit()
             return True, "Sent to SMTP server"
+        except smtplib.SMTPAuthenticationError as auth_err:
+            if server:
+                try: server.quit()
+                except Exception: pass
+            return False, f"Authentication failed (code {auth_err.smtp_code}). Google requires a 16-character App Password from myaccount.google.com/apppasswords."
+        except smtplib.SMTPServerDisconnected as disc_err:
+            if server:
+                try: server.quit()
+                except Exception: pass
+            if "gmail.com" in host.lower():
+                return False, "Google rejected login (Application-specific password required). You must use a 16-character App Password, not your standard Gmail password."
+            return False, f"Connection closed: {str(disc_err)}"
         except Exception as e:
             if server:
                 try:

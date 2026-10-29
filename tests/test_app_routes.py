@@ -42,6 +42,22 @@ def test_api_upload_pdf():
         assert json_data["recipients"][0]["email"] == "hiring@google.com"
 
 
+def test_api_upload_csv():
+    csv_bytes = b"Email,Company,Position\nrecruiter@apple.com,Apple,iOS Architect\n"
+    with app.test_client() as client:
+        data = {
+            "file": (io.BytesIO(csv_bytes), "recruiters.csv")
+        }
+        res = client.post("/api/upload-pdf", data=data, content_type="multipart/form-data")
+        assert res.status_code == 200
+        json_data = res.get_json()
+        assert json_data["success"] is True
+        assert len(json_data["recipients"]) == 1
+        assert json_data["recipients"][0]["email"] == "recruiter@apple.com"
+        assert json_data["recipients"][0]["company"] == "Apple"
+        assert json_data["recipients"][0]["job_title"] == "iOS Architect"
+
+
 def test_api_upload_resume_and_remove():
     # Valid resume PDF
     resume_bytes = b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF"
@@ -98,3 +114,4 @@ def test_api_history_export():
         assert res.status_code == 200
         assert res.mimetype == "text/csv"
         assert b"Recipient Email" in res.data
+

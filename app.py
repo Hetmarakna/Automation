@@ -25,9 +25,9 @@ from database import (
 )
 from validators import (
     validate_email, clean_email, validate_pdf_file,
-    validate_smtp_config, sanitize_text
+    validate_import_file, validate_smtp_config, sanitize_text
 )
-from pdf_extractor import extract_emails_from_pdf
+from pdf_extractor import extract_emails_from_pdf, extract_recipients_from_file
 from email_sender import (
     test_smtp_connection, build_email_message,
     render_template as interpolate_template,
@@ -185,20 +185,21 @@ def help_page():
 # ==========================================
 
 @app.route("/api/upload-pdf", methods=["POST"])
+@app.route("/api/upload-recipients", methods=["POST"])
 def api_upload_pdf():
-    """Upload job details PDF and extract email recipients."""
+    """Upload job details or recruiter contact document (PDF, CSV, or Excel)."""
     if "file" not in request.files:
         return jsonify({"success": False, "error": "No file uploaded."}), 400
 
     file = request.files["file"]
-    is_valid, err_msg = validate_pdf_file(file, max_size_mb=15)
+    is_valid, err_msg = validate_import_file(file, max_size_mb=20)
     if not is_valid:
         return jsonify({"success": False, "error": err_msg}), 400
 
-    original_name = secure_filename(file.filename) or "document.pdf"
+    original_name = secure_filename(file.filename) or "document"
     file_bytes = file.read()
 
-    result = extract_emails_from_pdf(file_bytes, source_filename=original_name)
+    result = extract_recipients_from_file(file_bytes, filename=original_name)
     return jsonify(result)
 
 
@@ -316,10 +317,19 @@ def api_save_smtp():
     if password:
         update_env_variable("SMTP_PASSWORD", password)
 
+    has_pwd = bool(os.getenv("SMTP_PASSWORD"))
+    if not has_pwd:
+        return jsonify({
+            "success": True,
+            "warning": True,
+            "message": "Server settings saved, but App Password is empty! You must enter your 16-character Gmail App Password to send emails.",
+            "has_password": False
+        })
+
     return jsonify({
         "success": True,
-        "message": "SMTP configuration saved securely.",
-        "has_password": bool(os.getenv("SMTP_PASSWORD"))
+        "message": "SMTP configuration and App Password saved securely. Ready to send!",
+        "has_password": True
     })
 
 
@@ -576,3 +586,4 @@ if __name__ == "__main__":
     print("🚀 SmartApply is starting locally on http://127.0.0.1:5000")
     print("=" * 60 + "\n")
     app.run(host="127.0.0.1", port=5000, debug=True)
+

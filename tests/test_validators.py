@@ -4,7 +4,7 @@ test_validators.py - Tests for input validation and sanitation.
 import io
 from validators import (
     validate_email, clean_email, validate_pdf_file,
-    validate_smtp_config, sanitize_text
+    validate_import_file, validate_smtp_config, sanitize_text
 )
 
 
@@ -122,3 +122,25 @@ def test_validate_smtp_config():
 def test_sanitize_text():
     assert sanitize_text("  Hello \x00 World  ") == "Hello  World"
     assert sanitize_text(None) == ""
+
+
+def test_validate_import_file():
+    # Valid CSV
+    csv_file = DummyFileStorage("leads.csv", b"Email,Company\na@b.com,Co\n")
+    ok, msg = validate_import_file(csv_file)
+    assert ok is True
+    assert "CSV" in msg
+
+    # Valid Excel (.xlsx) with PK zip magic header
+    xlsx_file = DummyFileStorage("data.xlsx", b"PK\x03\x04excelcontents")
+    ok, msg = validate_import_file(xlsx_file)
+    assert ok is True
+    assert "XLSX" in msg
+
+    # Invalid extension (.txt)
+    txt_file = DummyFileStorage("readme.txt", b"some text")
+    ok, msg = validate_import_file(txt_file)
+    assert ok is False
+    assert "Invalid format" in msg
+
+

@@ -6,10 +6,11 @@ A complete, functional desktop-friendly web application that automates sending p
 
 ## 🌟 Key Features
 
-- **Local PDF Recruiter Extraction**:
-  - Drag-and-drop interface for job opening PDFs or recruiter lists.
-  - Extracts text layers locally via **PyMuPDF (`fitz`)**.
-  - Identifies unique email addresses using regular expressions and auto-infers company and role context.
+- **Multi-Format Contact Import (PDF, CSV, Excel)**:
+  - Drag-and-drop interface supporting **PDF (.pdf)**, **CSV (.csv)**, and **Excel (.xlsx, .xls)**.
+  - Extracts text layers from PDFs via **PyMuPDF (`fitz`)**, and spreadsheet grids via **openpyxl** and the standard `csv` library.
+  - Auto-maps standard spreadsheet column headers (`Email`, `Company`, `Job Title` / `Role`) or regex scans cell values.
+  - Automatic email deduplication and company domain inference.
   - Transparent scanned document detection: clearly informs when a PDF is a scanned image with no selectable text layer.
   - **Zero auto-sending**: Extracted emails are never dispatched automatically.
 
@@ -179,3 +180,4 @@ pytest -v
 ```
 
 All tests run locally in sandbox mode using mocked SMTP connections.
+

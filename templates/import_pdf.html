@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Import Job Details — SmartApply{% endblock %}
+{% block title %}Import Job Details (PDF, CSV, Excel) — SmartApply{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>Import Job Details PDF</h1>
-        <p>Upload a document with job postings or recruiter listings to extract email contacts locally.</p>
+        <h1>Import Job Details & Contacts</h1>
+        <p>Upload a document with job postings or recruiter contact lists. Supports <strong>PDF (.pdf)</strong>, <strong>CSV (.csv)</strong>, and <strong>Excel (.xlsx, .xls)</strong> spreadsheets.</p>
     </div>
 </div>
 
@@ -15,19 +15,19 @@
     <div class="sa-card-header">
         <h2 class="sa-card-title">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            PDF Document Upload
+            Document & Spreadsheet Upload
         </h2>
-        <span class="badge badge-sa-neutral">PDF Only (Max 15MB)</span>
+        <span class="badge badge-sa-neutral">PDF, CSV, XLSX, XLS (Max 20MB)</span>
     </div>
 
     <!-- Drag and Drop Box -->
     <div id="pdfDropzone" class="upload-dropzone">
-        <input type="file" id="pdfFileInput" accept=".pdf,application/pdf" class="d-none">
+        <input type="file" id="pdfFileInput" accept=".pdf,.csv,.xlsx,.xls,application/pdf,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" class="d-none">
         <div class="dropzone-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
         </div>
-        <div class="dropzone-title">Drop your Job Openings PDF here, or click to browse</div>
-        <p class="dropzone-hint">PyMuPDF will read text layers and extract recruiter and hiring email addresses automatically.</p>
+        <div class="dropzone-title">Drop your PDF, CSV, or Excel file here, or click to browse</div>
+        <p class="dropzone-hint">Automatically parses email addresses, company names, and job roles from PDF text layers or spreadsheet columns.</p>
     </div>
 
     <!-- Extraction Progress Indicator -->
@@ -134,3 +134,4 @@
     </div>
 </div>
 {% endblock %}
+

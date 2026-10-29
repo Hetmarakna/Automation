@@ -157,8 +157,11 @@ function initImportPage() {
 }
 
 function handlePdfUpload(file) {
-    if (!file.name.toLowerCase().endsWith(".pdf")) {
-        showToast("Only PDF documents (.pdf) are supported.", "error");
+    const nameLower = file.name.toLowerCase();
+    const isValid = nameLower.endsWith(".pdf") || nameLower.endsWith(".csv") || 
+                    nameLower.endsWith(".xlsx") || nameLower.endsWith(".xls");
+    if (!isValid) {
+        showToast("Supported file types: PDF (.pdf), CSV (.csv), and Excel (.xlsx, .xls).", "error");
         return;
     }
 
@@ -1105,3 +1108,4 @@ document.addEventListener("DOMContentLoaded", () => {
     initSmtpPage();
     initHistoryPage();
 });
+

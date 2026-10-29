@@ -85,6 +85,50 @@ def validate_pdf_file(file_storage, max_size_mb: int = 15) -> Tuple[bool, str]:
     return True, "Valid PDF file."
 
 
+def validate_import_file(file_storage, max_size_mb: int = 20) -> Tuple[bool, str]:
+    """
+    Validate an uploaded job details / recruiter contact document.
+    Supports PDF (.pdf), CSV (.csv), and Excel (.xlsx, .xls) files.
+    """
+    if not file_storage or not file_storage.filename:
+        return False, "No file was selected for upload."
+
+    filename = file_storage.filename.strip()
+    _, ext = os.path.splitext(filename)
+    allowed_exts = {".pdf", ".csv", ".xlsx", ".xls"}
+    if ext.lower() not in allowed_exts:
+        return False, f"Invalid format '{ext}'. Supported formats: PDF (.pdf), CSV (.csv), Excel (.xlsx, .xls)."
+
+    try:
+        file_storage.seek(0, os.SEEK_END)
+        size_bytes = file_storage.tell()
+        file_storage.seek(0)
+    except Exception as e:
+        return False, f"Could not determine file size: {e}"
+
+    if size_bytes == 0:
+        return False, "The uploaded file is empty (0 bytes)."
+
+    max_bytes = max_size_mb * 1024 * 1024
+    if size_bytes > max_bytes:
+        size_mb = size_bytes / (1024 * 1024)
+        return False, f"File size ({size_mb:.1f} MB) exceeds maximum allowed limit of {max_size_mb} MB."
+
+    # Signature verification for binary types
+    if ext.lower() == ".pdf":
+        header = file_storage.read(5)
+        file_storage.seek(0)
+        if not header.startswith(b"%PDF"):
+            return False, "The file does not appear to be a valid PDF document (missing %PDF header)."
+    elif ext.lower() == ".xlsx":
+        header = file_storage.read(4)
+        file_storage.seek(0)
+        if not header.startswith(b"PK\x03\x04"):
+            return False, "The file does not appear to be a valid Excel (.xlsx) workbook."
+
+    return True, f"Valid {ext.upper()} file."
+
+
 def validate_smtp_config(host: str, port: any, security: str, sender_email: str) -> Tuple[bool, str]:
     """
     Validate basic SMTP parameters.
@@ -117,3 +161,4 @@ def sanitize_text(text: str) -> str:
         return ""
     # Strip null characters to avoid issues in SQLite or email headers
     return text.replace("\x00", "").strip()
+

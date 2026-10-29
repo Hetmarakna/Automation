@@ -286,3 +286,4 @@ def save_template_settings(
     """, (subject, body, candidate_name.strip(), candidate_contact.strip(), float(delay_seconds), int(batch_limit)))
     conn.commit()
     conn.close()
+
