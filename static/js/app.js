@@ -34,9 +34,21 @@ function showToast(message, type = "info") {
 let sendPollInterval = null;
 
 // ==========================================
-// 1. IMPORT JOB DETAILS PDF PAGE
+// 1. IMPORT JOB DETAILS (PDF, CSV, EXCEL)
 // ==========================================
 let extractedRecipients = [];
+
+function loadStagedRecipients() {
+    const saved = sessionStorage.getItem("smartapply_recipients");
+    if (saved) {
+        try {
+            extractedRecipients = JSON.parse(saved) || [];
+        } catch (e) {
+            extractedRecipients = [];
+        }
+    }
+    updateRecipientCounterBadge();
+}
 
 function initImportPage() {
     const dropzone = document.getElementById("pdfDropzone");
@@ -47,17 +59,10 @@ function initImportPage() {
     if (!dropzone || !fileInput) return;
 
     // Load any existing saved recipients from sessionStorage
-    const saved = sessionStorage.getItem("smartapply_recipients");
-    if (saved) {
-        try {
-            extractedRecipients = JSON.parse(saved);
-            if (extractedRecipients.length > 0) {
-                renderRecipientsTable();
-                if (resultsContainer) resultsContainer.classList.remove("d-none");
-            }
-        } catch (e) {
-            console.error(e);
-        }
+    loadStagedRecipients();
+    if (extractedRecipients.length > 0) {
+        renderRecipientsTable();
+        if (resultsContainer) resultsContainer.classList.remove("d-none");
     }
 
     // Drag-and-drop events
@@ -104,8 +109,14 @@ function initImportPage() {
             const company = (companyInput.value || "").trim();
             const jobTitle = (titleInput.value || "").trim();
 
-            if (!email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
                 showToast("Please provide a valid email address.", "warning");
+                return;
+            }
+
+            if (extractedRecipients.some(r => r.email === email)) {
+                showToast(`Recipient '${email}' is already in your list.`, "warning");
                 return;
             }
 
@@ -231,6 +242,23 @@ function updateRecipientCounterBadge() {
 
     const totalEls = document.querySelectorAll(".recipient-total-count");
     totalEls.forEach(el => el.innerText = totalCount);
+
+    const selectAllCheckbox = document.getElementById("selectAllCheckbox");
+    if (selectAllCheckbox) {
+        if (totalCount === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (selectedCount === totalCount) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else if (selectedCount === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
 }
 
 function renderRecipientsTable() {
@@ -523,6 +551,12 @@ function initComposerPage() {
     const btnConfirmSend = document.getElementById("btnConfirmSend");
     if (btnConfirmSend) {
         btnConfirmSend.addEventListener("click", () => {
+            const confirmCheck = document.getElementById("confirmExplicitCheck");
+            if (confirmCheck && !confirmCheck.checked) {
+                showToast("Please check the confirmation box before sending.", "warning");
+                return;
+            }
+
             // Close review modal
             const reviewModal = bootstrap.Modal.getInstance(reviewModalEl);
             if (reviewModal) reviewModal.hide();
@@ -637,6 +671,16 @@ function initResumeUploader() {
                 .then(() => {
                     if (resumeInfoCard) resumeInfoCard.classList.add("d-none");
                     if (resumeDropzone) resumeDropzone.classList.remove("d-none");
+
+                    // Update live preview & summary card
+                    const prevAtt = document.getElementById("previewAttachmentRow");
+                    if (prevAtt) prevAtt.classList.add("d-none");
+                    const summAtt = document.getElementById("summaryResumeStatus");
+                    if (summAtt) {
+                        summAtt.className = "fw-semibold small text-danger";
+                        summAtt.innerText = "No resume uploaded";
+                    }
+
                     showToast("Resume removed.", "info");
                 });
             }
@@ -670,6 +714,18 @@ function uploadResumeFile(file) {
             if (resumeSizeSpan) resumeSizeSpan.innerText = `(${data.size_kb} KB)`;
             if (resumeDropzone) resumeDropzone.classList.add("d-none");
             if (resumeInfoCard) resumeInfoCard.classList.remove("d-none");
+
+            // Update live preview & summary card
+            const prevAtt = document.getElementById("previewAttachmentRow");
+            const prevName = document.getElementById("previewAttachmentFilename");
+            if (prevAtt) prevAtt.classList.remove("d-none");
+            if (prevName) prevName.innerText = data.filename;
+
+            const summAtt = document.getElementById("summaryResumeStatus");
+            if (summAtt) {
+                summAtt.className = "fw-semibold small text-success";
+                summAtt.innerText = `Yes (${data.filename})`;
+            }
         } else {
             showToast(data.error || "Failed to upload resume.", "error");
         }
@@ -834,6 +890,13 @@ function initCampaignControls() {
             }
         });
     }
+
+    const btnDone = document.getElementById("btnDoneCampaign");
+    if (btnDone) {
+        btnDone.addEventListener("click", () => {
+            window.location.href = "/history";
+        });
+    }
 }
 
 // ==========================================
@@ -890,12 +953,16 @@ function initSmtpPage() {
             if (spinner) spinner.classList.remove("d-none");
             btnTestConnection.disabled = true;
 
+            const rawHost = hostInput.value.trim();
+            const rawPwd = passwordInput.value.trim();
+            const cleanPwd = rawHost.toLowerCase().includes("gmail") ? rawPwd.replace(/\s+/g, "") : rawPwd;
+
             const payload = {
-                host: hostInput.value.trim(),
+                host: rawHost,
                 port: portInput.value.trim(),
                 security: securitySelect.value,
                 sender_email: senderEmailInput.value.trim(),
-                password: passwordInput.value.trim()
+                password: cleanPwd
             };
 
             fetch("/api/test-smtp", {
@@ -933,13 +1000,17 @@ function initSmtpPage() {
             const btnSave = document.getElementById("btnSaveSmtp");
             if (btnSave) btnSave.disabled = true;
 
+            const rawHost = hostInput.value.trim();
+            const rawPwd = passwordInput.value.trim();
+            const cleanPwd = rawHost.toLowerCase().includes("gmail") ? rawPwd.replace(/\s+/g, "") : rawPwd;
+
             const payload = {
-                host: hostInput.value.trim(),
+                host: rawHost,
                 port: parseInt(portInput.value.trim()) || 587,
                 security: securitySelect.value,
                 sender_email: senderEmailInput.value.trim(),
                 sender_name: senderNameInput.value.trim(),
-                password: passwordInput.value.trim()
+                password: cleanPwd
             };
 
             fetch("/api/save-smtp", {
@@ -951,7 +1022,11 @@ function initSmtpPage() {
             .then(data => {
                 if (btnSave) btnSave.disabled = false;
                 if (data.success) {
-                    showToast(data.message, "success");
+                    if (data.warning) {
+                        showToast(data.message, "warning");
+                    } else {
+                        showToast(data.message, "success");
+                    }
                     // Clear password field to avoid keeping it in DOM
                     if (passwordInput && passwordInput.value) {
                         passwordInput.value = "";
@@ -986,6 +1061,14 @@ function initHistoryPage() {
         .then(res => res.json())
         .then(data => {
             renderHistoryRows(data.records);
+            if (data.stats) {
+                const tot = document.getElementById("historyTotalCount");
+                const snt = document.getElementById("historySentCount");
+                const fld = document.getElementById("historyFailedCount");
+                if (tot) tot.innerText = data.stats.total;
+                if (snt) snt.innerText = data.stats.sent;
+                if (fld) fld.innerText = data.stats.failed;
+            }
         });
     }
 
@@ -1100,8 +1183,20 @@ function debounce(func, wait) {
     };
 }
 
+function initMobileNav() {
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener("click", () => {
+            const sidebar = document.querySelector(".sidebar");
+            if (sidebar) sidebar.classList.toggle("show");
+        });
+    }
+}
+
 // Document Ready Initialization
 document.addEventListener("DOMContentLoaded", () => {
+    loadStagedRecipients();
+    initMobileNav();
     initImportPage();
     initComposerPage();
     initCampaignControls();

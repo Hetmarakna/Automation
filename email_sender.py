@@ -105,8 +105,9 @@ def test_smtp_connection(
                 server.starttls(context=context)
                 server.ehlo()
 
-        # Attempt authentication
-        server.login(username, password)
+        # Attempt authentication (auto-strip spaces for Gmail App Passwords)
+        clean_pwd = password.replace(" ", "").strip() if "gmail" in host.lower() else password
+        server.login(username, clean_pwd)
         return True, f"Successfully authenticated with {host}:{port} via {security}!"
 
     except smtplib.SMTPAuthenticationError as auth_err:
@@ -323,7 +324,8 @@ class CampaignManager:
                     server.starttls(context=context)
                     server.ehlo()
 
-            server.login(username, password)
+            clean_pwd = password.replace(" ", "").strip() if "gmail" in host.lower() else password
+            server.login(username, clean_pwd)
             server.send_message(msg)
             server.quit()
             return True, "Sent to SMTP server"

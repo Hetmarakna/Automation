@@ -154,8 +154,11 @@ def get_history(
     params = []
 
     if status_filter and status_filter.strip() and status_filter.lower() != "all":
-        query += " AND status = ?"
-        params.append(status_filter.strip())
+        if status_filter.strip().lower() == "skipped":
+            query += " AND status LIKE 'Skipped%'"
+        else:
+            query += " AND status = ?"
+            params.append(status_filter.strip())
 
     if search and search.strip():
         term = f"%{search.strip()}%"

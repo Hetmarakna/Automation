@@ -142,6 +142,24 @@ def test_smtp_connection_timeout(mock_smtp):
     assert "timed out" in message.lower()
 
 
+@patch("smtplib.SMTP")
+def test_gmail_app_password_space_stripping(mock_smtp):
+    instance = MagicMock()
+    mock_smtp.return_value = instance
+
+    # Password with spaces like Google presents it: "abcd efgh ijkl mnop"
+    ok, message = check_smtp_connection(
+        host="smtp.gmail.com",
+        port=587,
+        security="STARTTLS",
+        username="user@gmail.com",
+        password="abcd efgh ijkl mnop"
+    )
+    assert ok is True
+    # Verify spaces were stripped before calling login
+    instance.login.assert_called_once_with("user@gmail.com", "abcdefghijklmnop")
+
+
 def test_campaign_manager_bulk_send_and_deduplication():
     # Use isolated test database
     test_db = os.path.join(tempfile.gettempdir(), f"test_smartapply_{time.time()}.db")
@@ -263,10 +281,31 @@ def test_history_persistence_in_database():
     assert records[0]["status"] == "Failed"
     assert records[0]["error_message"] == "Authentication failed 535"
 
+    add_history_record(
+        recipient_email="recruiter3@firm.com",
+        company_name="Firm Three",
+        job_title="Dev",
+        subject="Application",
+        body_snippet="Hello",
+        resume_name="resume.pdf",
+        status="Skipped: Duplicate in batch",
+        error_message="Duplicate in batch",
+        db_path=test_db
+    )
+
+    records = get_history(db_path=test_db)
+    assert len(records) == 3
+
+    # Test filtering by "Skipped"
+    skipped_records = get_history(status_filter="Skipped", db_path=test_db)
+    assert len(skipped_records) == 1
+    assert skipped_records[0]["recipient_email"] == "recruiter3@firm.com"
+
     stats = get_history_stats(db_path=test_db)
-    assert stats["total"] == 2
+    assert stats["total"] == 3
     assert stats["sent"] == 1
     assert stats["failed"] == 1
+    assert stats["skipped"] == 1
 
     if os.path.exists(test_db):
         os.remove(test_db)

@@ -313,9 +313,10 @@ def api_save_smtp():
     # Save non-sensitive settings to SQLite
     save_smtp_settings(host, int(port), security, sender_email, sender_name)
 
-    # If a new password was submitted, save to .env
+    # If a new password was submitted, save to .env (auto-strip spaces for Gmail)
     if password:
-        update_env_variable("SMTP_PASSWORD", password)
+        clean_pwd = password.replace(" ", "").strip() if "gmail" in host.lower() else password.strip()
+        update_env_variable("SMTP_PASSWORD", clean_pwd)
 
     has_pwd = bool(os.getenv("SMTP_PASSWORD"))
     if not has_pwd:

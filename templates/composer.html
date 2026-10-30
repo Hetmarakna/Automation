@@ -178,12 +178,10 @@
                     <div class="mb-1"><strong class="text-muted">From:</strong> <span class="text-dark">{{ smtp_cfg.username or 'your.email@gmail.com' }}</span></div>
                     <div class="mb-1"><strong class="text-muted">To:</strong> <span id="previewToText" class="text-dark">recruiter@company.com</span></div>
                     <div><strong class="text-muted">Subject:</strong> <span id="previewSubjectText" class="fw-semibold text-primary">Application for Senior Developer</span></div>
-                    {% if resume_info %}
-                    <div class="mt-2 pt-2 border-top d-flex align-items-center gap-1 small text-muted">
+                    <div id="previewAttachmentRow" class="mt-2 pt-2 border-top d-flex align-items-center gap-1 small text-muted {% if not resume_info %}d-none{% endif %}">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-                        <span>Attachment: <strong>{{ resume_info.filename }}</strong></span>
+                        <span>Attachment: <strong id="previewAttachmentFilename">{% if resume_info %}{{ resume_info.filename }}{% endif %}</strong></span>
                     </div>
-                    {% endif %}
                 </div>
                 <div id="previewBodyText" class="preview-body">
                     Loading preview...
@@ -202,7 +200,7 @@
                 </div>
                 <div class="d-flex justify-content-between">
                     <span class="small text-muted">Resume Attached:</span>
-                    <span class="fw-semibold small {% if resume_info %}text-success{% else %}text-danger{% endif %}">
+                    <span id="summaryResumeStatus" class="fw-semibold small {% if resume_info %}text-success{% else %}text-danger{% endif %}">
                         {% if resume_info %}Yes ({{ resume_info.filename }}){% else %}No resume uploaded{% endif %}
                     </span>
                 </div>
